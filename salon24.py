@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy.crawler import CrawlerProcess
+import json
+
+
 import time
 class P:
     p=[]
@@ -21,16 +24,20 @@ def between(value, a, b):
 class Salon24Spider(scrapy.Spider):
     name = 'salon24'
     allowed_domains = ['salon24.pl']
-    start_urls = ['https://www.salon24.pl/katalog-blogow/']
+    start_urls = ['https://www.salon24.pl/katalog-blogow/,alfabetycznie,1']
 
 
 
 
     def parse(self, response):
+
+
+
         self.log('I just visited: ' + response.url)
         blog_list= response.css('ul.blog-list')
 
-
+        next_page = response.css('ul.pager').css("li").extract()[-1]
+        #self.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ' + str(next_page.find("Następna strona")) )
 
         for li in blog_list.css('li'):
             result = {
@@ -40,7 +47,21 @@ class Salon24Spider(scrapy.Spider):
 
             }
             P.p.append(result)
-            yield result
+
+        x = 1
+        while response.url[-x] != ",":
+            x = x + 1
+
+        next = int(response.url[-x + 1:]) + 1
+
+        if (next<30 ) & (next_page.find("Następna strona")>0) : # delete (next<30 ) & to parse all blogs
+
+            url="https://www.salon24.pl/katalog-blogow/,alfabetycznie,"+ str(next)
+
+            return scrapy.Request(url,
+                             callback=self.parse)
+
+
 
         
 process = CrawlerProcess({
@@ -52,7 +73,7 @@ Salon = Salon24Spider()
 process.crawl(Salon)
 process.start()
 
-print(P.p)
-
+with open('data.json', 'a') as json_file:
+    json.dump(P.p, json_file)
 
 
