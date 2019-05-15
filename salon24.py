@@ -99,9 +99,10 @@ class Salon24Spider(scrapy.Spider):
 
             article = self.result.data[self.result.counter]['tmp_articles'].pop(0)
             self.log(article['article_link'])
+            self.result.data[self.result.counter]['articles'].append(article)
 
             url ="https://"+article['article_link']
-            return scrapy.Request(url, dont_filter=True,
+            return scrapy.Request(url,  dont_filter=True,
                                   callback=self.parseArticle)
 
 
@@ -116,7 +117,13 @@ class Salon24Spider(scrapy.Spider):
         #
 
     def parseArticle(self, response):
-        self.log("P A R S O W A N K O")
+        self.log("P A R S O W A N K O"  )
+        self.result.data[self.result.counter]['articles'][-1]['content']=response.css('div.article-content').extract()
+
+        url = "https://salon24.pl"
+        return scrapy.Request(url, dont_filter=True,
+                              callback=self.findArticle)
+
 
     def between(self, value, a, b,hack=0):
             # Find and validate before-part.
@@ -157,10 +164,10 @@ process.crawl( Salon24Spider(),input=1, result=p)
 
 process.start()
 
-print(p.data[0]["tmp_articles"],p.data[1]["tmp_articles"],p.data[2]["tmp_articles"])
+print(p.data[0]["articles"],p.data[1]["articles"],p.data[2]["articles"])
 # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
 # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
-
+print(p.data)
 print(time.time()-start)
 
 with open('data.json', 'a') as json_file:
