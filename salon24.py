@@ -77,24 +77,46 @@ class Salon24Spider(scrapy.Spider):
                 }
                 self.result.data[self.result.counter]['tmp_articles'].append(result)
 
-            self.reslt.counter += 1
-            if(self.reslt.counter<3):
-                url = "https://" + self.result.data[self.reslt.counter]['blog_link']
+            self.result.counter += 1
+            if(self.result.counter<3):
+                url = "https://" + self.result.data[self.result.counter]['blog_link']
 
                 return scrapy.Request(url,
                                   callback=self.parseSingleBlog)
 
-            else:
-                url = "https://" + self.result.data[self.reslt.counter]['blog_link']
 
-                return scrapy.Request(url,
-                                      callback=self.parseArticle)
+
+
+            else:
+                    self.result.counter = 0
+                    return scrapy.Request('https://www.salon24.pl',
+                                      callback=self.findArticle)
+
+    def findArticle(self, response):
+        self.log('I just visited: ' + response.url)
+
+        while (self.result.data[self.result.counter]['tmp_articles']):
+
+            article = self.result.data[self.result.counter]['tmp_articles'].pop(0)
+            self.log(article['article_link'])
+
+            url ="https://"+article['article_link']
+            return scrapy.Request(url, dont_filter=True,
+                                  callback=self.parseArticle)
+
+
+        self.result.counter += 1
+        if self.result.counter<3:
+
+            url = "https://" + self.result.data[self.result.counter]['blog_link']
+            return scrapy.Request(url, dont_filter=True,
+                                  callback=self.findArticle)
+
+        # # url = "https://" + self.result.data[self.result.counter]['tmp_articles']
+        #
 
     def parseArticle(self, response):
-        pass
-
-
-
+        self.log("P A R S O W A N K O")
 
     def between(self, value, a, b,hack=0):
             # Find and validate before-part.
@@ -125,8 +147,8 @@ p3=Result()
 start=time.time()
 
 process.crawl( Salon24Spider(),input=1, result=p)
-process.crawl( Salon24Spider(),input=30, result=p2)
-process.crawl( Salon24Spider(),input=60,result=p3)
+# process.crawl( Salon24Spider(),input=30, result=p2)
+# process.crawl( Salon24Spider(),input=60,result=p3)
 # process.crawl( Salon24Spider(),input=90)
 # process.crawl( Salon24Spider(),input=120)
 # process.crawl( Salon24Spider(),input=150)
@@ -135,7 +157,7 @@ process.crawl( Salon24Spider(),input=60,result=p3)
 
 process.start()
 
-print(p2.data[0]["tmp_articles"],p2.data[1]["tmp_articles"],p2.data[2]["tmp_articles"])
+print(p.data[0]["tmp_articles"],p.data[1]["tmp_articles"],p.data[2]["tmp_articles"])
 # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
 # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
 
