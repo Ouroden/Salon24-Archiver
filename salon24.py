@@ -186,19 +186,19 @@ class Salon24Spider(scrapy.Spider):
             return value[adjusted_pos_a:pos_b - hack]  # -3 hack
 
     def before(self,value, a):
-        # Find first part and return slice before it.
-        pos_a = value.find(a)
-        if pos_a == -1: return ""
-        return value[0:pos_a]
+            # Find first part and return slice before it.
+            pos_a = value.find(a)
+            if pos_a == -1: return ""
+            return value[0:pos_a]
 
     def after(self,value, a):
-        # Find and validate first part.
-        pos_a = value.rfind(a)
-        if pos_a == -1: return ""
-        # Returns chars after the found string.
-        adjusted_pos_a = pos_a + len(a)
-        if adjusted_pos_a >= len(value): return ""
-        return value[adjusted_pos_a:]
+            # Find and validate first part.
+            pos_a = value.rfind(a)
+            if pos_a == -1: return ""
+            # Returns chars after the found string.
+            adjusted_pos_a = pos_a + len(a)
+            if adjusted_pos_a >= len(value): return ""
+            return value[adjusted_pos_a:]
 
 
 
@@ -206,7 +206,7 @@ process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
 })
 
-blog_list=12343
+blog_list=12345
 
 p=Result()
 p2=Result()
