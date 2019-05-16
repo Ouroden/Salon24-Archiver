@@ -16,11 +16,15 @@ class Salon24Spider(scrapy.Spider):
     name = 'salon24'
     allowed_domains = ['salon24.pl']
     start_urls = ['https://www.salon24.pl/']
-
-
-
+    """
+    def __init__(self, input, amount,result):
+        self.input=input
+        self.amount=amount
+        self.result=result
+    """
     def parse(self, response):
-
+        self.log(self.result.counter)
+        self.log(self.amount)
         url = "https://www.salon24.pl/katalog-blogow/,alfabetycznie," + str(self.input)
         return scrapy.Request(url,
                               callback=self.parseBlogs)
@@ -51,7 +55,7 @@ class Salon24Spider(scrapy.Spider):
 
         next = int(response.url[-x + 1:]) + 1
 
-        if (next<self.input+2 ) & (next_page.find("Następna strona")>0) : # delete (next<30 ) & to parse all blogs
+        if (next<=self.input +self.amount ) and (next_page.find("Następna strona")>0) : # delete (next<30 ) & to parse all blogs
 
             url="https://www.salon24.pl/katalog-blogow/,alfabetycznie,"+ str(next)
 
@@ -68,6 +72,7 @@ class Salon24Spider(scrapy.Spider):
     def parseSingleBlog(self, response):
             self.log('I just visited: ' + response.url)
 
+            self.log(self.result.counter)
 
             for article in response.css('article.posts').css('h2').extract():
                 link,title = self.between( article, "//", "</a>").split("\">")
@@ -78,40 +83,43 @@ class Salon24Spider(scrapy.Spider):
                 self.result.data[self.result.counter]['tmp_articles'].append(result)
 
             self.result.counter += 1
-            if(self.result.counter<3):
+
+            amount=self.amount
+            if self.result.counter + 0< self.amount *18 and len(self.result.data)>self.result.counter:
                 url = "https://" + self.result.data[self.result.counter]['blog_link']
 
-                return scrapy.Request(url,
+                return scrapy.Request(url,dont_filter=True,
                                   callback=self.parseSingleBlog)
-
 
 
 
             else:
                     self.result.counter = 0
-                    return scrapy.Request('https://www.salon24.pl',
+                    return scrapy.Request('https://www.salon24.pl',dont_filter=True,
                                       callback=self.findArticle)
 
     def findArticle(self, response):
-        self.log('I just visited: ' + response.url)
+            self.log('I just visited: ' + response.url)
+            self.log(self.result.counter)
+            self.log(len(self.result.data))
 
-        while (self.result.data[self.result.counter]['tmp_articles']):
+            while (self.result.data[self.result.counter]['tmp_articles']):
 
-            article = self.result.data[self.result.counter]['tmp_articles'].pop(0)
-            self.log(article['article_link'])
-            self.result.data[self.result.counter]['articles'].append(article)
+                article = self.result.data[self.result.counter]['tmp_articles'].pop(0)
+                self.log(article['article_link'])
+                self.result.data[self.result.counter]['articles'].append(article)
 
-            url ="https://"+article['article_link']
-            return scrapy.Request(url,  dont_filter=True,
-                                  callback=self.parseArticle)
+                url ="https://"+article['article_link']
+                return scrapy.Request(url,  dont_filter=True,
+                                      callback=self.parseArticle)
 
 
-        self.result.counter += 1
-        if self.result.counter<3:
+            self.result.counter += 1
+            if self.result.counter<(self.amount*18)  and  len(self.result.data)>self.result.counter:
 
-            url = "https://" + self.result.data[self.result.counter]['blog_link']
-            return scrapy.Request(url, dont_filter=True,
-                                  callback=self.findArticle)
+                url = "https://" + self.result.data[self.result.counter]['blog_link']
+                return scrapy.Request(url, dont_filter=True,
+                                      callback=self.findArticle)
 
         # # url = "https://" + self.result.data[self.result.counter]['tmp_articles']
         #
@@ -146,16 +154,16 @@ process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
 })
 
-blog_list=1234
+blog_list=12343
 
 p=Result()
 p2=Result()
 p3=Result()
 start=time.time()
 
-process.crawl( Salon24Spider(),input=1, result=p)
-# process.crawl( Salon24Spider(),input=30, result=p2)
-# process.crawl( Salon24Spider(),input=60,result=p3)
+process.crawl( Salon24Spider(),input=1235, amount=1, result=p)
+#process.crawl( Salon24Spider(),input=30, result=p2)
+#process.crawl( Salon24Spider(),input=60,result=p3)
 # process.crawl( Salon24Spider(),input=90)
 # process.crawl( Salon24Spider(),input=120)
 # process.crawl( Salon24Spider(),input=150)
@@ -167,10 +175,12 @@ process.start()
 print(p.data[0]["articles"],p.data[1]["articles"],p.data[2]["articles"])
 # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
 # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
-print(p.data)
+print(len(p.data), 'wazme')
+
 print(time.time()-start)
 
-with open('data.json', 'a') as json_file:
+
+with open('data.json', 'w') as json_file:
     json.dump(p.data, json_file,ensure_ascii=False)
 
 
