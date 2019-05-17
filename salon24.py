@@ -24,6 +24,7 @@ class Salon24Spider(scrapy.Spider):
     """
     def parse(self, response):
         self.log(self.result.counter)
+
         self.log(self.amount)
         url = "https://www.salon24.pl/katalog-blogow/,alfabetycznie," + str(self.input)
         return scrapy.Request(url,
@@ -60,7 +61,7 @@ class Salon24Spider(scrapy.Spider):
 
         next = int(response.url[-x + 1:]) + 1
 
-        if (next<=self.input +self.amount ) and (next_page.find("Następna strona")>0) : # delete (next<30 ) & to parse all blogs
+        if (next<self.input +self.amount ) and (next_page.find("Następna strona")>0) : # delete (next<30 ) & to parse all blogs
 
             url="https://www.salon24.pl/katalog-blogow/,alfabetycznie,"+ str(next)
 
@@ -96,15 +97,20 @@ class Salon24Spider(scrapy.Spider):
                 odslon = self.before(odslon, "<span>")
                 # print(odslon)
 
+                descritpion=response.css('div.user-about__content').css('div.too-high::text').extract_first()
+                if descritpion:
+                    descritpion=descritpion.replace("\n" ,"").replace("\t","")
+
                 details={
                     'followers': obserwujących,
                     'views': odslon,
                     'articles_amount': notek,
-
+                    'blog_description': descritpion
                 }
                 self.result.data[self.result.counter]['followers']=obserwujących
                 self.result.data[self.result.counter]['views'] = odslon
                 self.result.data[self.result.counter]['articles_amount'] = notek
+                self.result.data[self.result.counter]['blog_description'] = descritpion
 
             for article in response.css('article.posts').css('h2').extract():
                 link,title = self.between( article, "//", "</a>").split("\">")
@@ -223,7 +229,7 @@ p2=Result()
 p3=Result()
 start=time.time()
 
-process.crawl( Salon24Spider(),input=1235, amount=1, result=p)
+process.crawl( Salon24Spider(),input=1, amount=1, result=p)
 #process.crawl( Salon24Spider(),input=30, result=p2)
 #process.crawl( Salon24Spider(),input=60,result=p3)
 # process.crawl( Salon24Spider(),input=90)
@@ -234,10 +240,11 @@ process.crawl( Salon24Spider(),input=1235, amount=1, result=p)
 
 process.start()
 
-print(p.data[2])
+#print(p.data[2])
 # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
 # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
-print(len(p.data), '')
+for tmp in p.data:
+    print(tmp['blog_description'])
 
 print(time.time()-start)
 
