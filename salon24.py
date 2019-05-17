@@ -166,7 +166,17 @@ class Salon24Spider(scrapy.Spider):
 
     def parseArticle(self, response):
         self.log("P A R S O W A N K O"  )
-        self.result.data[self.result.counter]['articles'][-1]['content']="cps" #response.css('div.article-content').extract()
+        self.result.data[self.result.counter]['articles'][-1]['content']=response.css('div.article-content').extract()
+
+        header=response.css('article.article').css('header')
+        categ=""
+        for cat in header.css('ul').css('li').extract():
+            categ+=self.between(cat,"\">","</a>") + " " # maybe should be table?
+        self.result.data[self.result.counter]['articles'][-1]['categories'] = categ
+        time=header.css('time::text').extract_first().replace("\n" ,"").replace("\t","")
+        self.result.data[self.result.counter]['articles'][-1]['date'] = time
+        views=header.css('span::text').extract_first().replace("\n" ,"").replace("\t","")
+        self.result.data[self.result.counter]['articles'][-1]['views'] = views
 
         url = "https://salon24.pl"
         return scrapy.Request(url, dont_filter=True,
@@ -213,7 +223,7 @@ p2=Result()
 p3=Result()
 start=time.time()
 
-process.crawl( Salon24Spider(),input=4, amount=1, result=p)
+process.crawl( Salon24Spider(),input=1235, amount=1, result=p)
 #process.crawl( Salon24Spider(),input=30, result=p2)
 #process.crawl( Salon24Spider(),input=60,result=p3)
 # process.crawl( Salon24Spider(),input=90)
@@ -224,10 +234,10 @@ process.crawl( Salon24Spider(),input=4, amount=1, result=p)
 
 process.start()
 
-print(p.data[4])
+print(p.data[2])
 # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
 # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
-print(len(p.data), 'wazme')
+print(len(p.data), '')
 
 print(time.time()-start)
 
