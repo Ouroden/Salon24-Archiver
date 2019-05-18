@@ -2,8 +2,8 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 import json
-
-
+import urllib.request
+import datetime
 import time
 class Result:
 
@@ -52,6 +52,7 @@ class Salon24Spider(scrapy.Spider):
                 'blog_link': (self.between(li.get(), "//", "img src",3)), #not the best way multiple " in expression need hack
                 'articles':[],
                 'tmp_articles':[]
+
             }
             self.result.data.append(result)
 
@@ -78,39 +79,45 @@ class Salon24Spider(scrapy.Spider):
     def parseSingleBlog(self, response):
             self.log('I just visited: ' + response.url)
 
+            if(response.url=="https://www.salon24.pl"):
+                self.result.data[self.result.counter]['followers'] = ""
+                self.result.data[self.result.counter]['views'] = ""
+                self.result.data[self.result.counter]['articles_amount'] = ""
+                self.result.data[self.result.counter]['blog_description'] = ""
+                self.log("Portal Error, link to blog doesnt exist")
             self.log(self.result.counter)
             if not 'followers' in self.result.data[self.result.counter]:
 
-                details = response.css('div.user-header__counters').extract()[0]
+                details = response.css('div.user-header__counters').extract_first()
+                if details:
+                    obserwujących = (self.between(details, "</i>", "obserwujących"))
+                    obserwujących = self.before(obserwujących, "<span>")
+                    # print(obserwujących)
 
-                obserwujących = (self.between(details, "</i>", "obserwujących"))
-                obserwujących = self.before(obserwujących, "<span>")
-                # print(obserwujących)
+                    details = self.after(details, "obserwujących")
+                    notek = self.between(details, "</i>", "not")
+                    notek = self.before(notek, "<span>")
+                    # print(notek)
 
-                details = self.after(details, "obserwujących")
-                notek = self.between(details, "</i>", "not")
-                notek = self.before(notek, "<span>")
-                # print(notek)
+                    details = self.after(details, "not")
+                    odslon = (self.between(details, "</i>", "odsło"))
+                    odslon = self.before(odslon, "<span>")
+                    # print(odslon)
 
-                details = self.after(details, "not")
-                odslon = (self.between(details, "</i>", "odsło"))
-                odslon = self.before(odslon, "<span>")
-                # print(odslon)
+                    descritpion=response.css('div.user-about__content').css('div.too-high::text').extract_first()
+                    if descritpion:
+                        descritpion=descritpion.replace("\n" ,"").replace("\t","")
 
-                descritpion=response.css('div.user-about__content').css('div.too-high::text').extract_first()
-                if descritpion:
-                    descritpion=descritpion.replace("\n" ,"").replace("\t","")
-
-                details={
-                    'followers': obserwujących,
-                    'views': odslon,
-                    'articles_amount': notek,
-                    'blog_description': descritpion
-                }
-                self.result.data[self.result.counter]['followers']=obserwujących
-                self.result.data[self.result.counter]['views'] = odslon
-                self.result.data[self.result.counter]['articles_amount'] = notek
-                self.result.data[self.result.counter]['blog_description'] = descritpion
+                    details={
+                        'followers': obserwujących,
+                        'views': odslon,
+                        'articles_amount': notek,
+                        'blog_description': descritpion
+                    }
+                    self.result.data[self.result.counter]['followers']=obserwujących
+                    self.result.data[self.result.counter]['views'] = odslon
+                    self.result.data[self.result.counter]['articles_amount'] = notek
+                    self.result.data[self.result.counter]['blog_description'] = descritpion
 
             for article in response.css('article.posts').css('h2').extract():
                 link,title = self.between( article, "//", "</a>").split("\">")
@@ -172,7 +179,7 @@ class Salon24Spider(scrapy.Spider):
 
     def parseArticle(self, response):
         self.log("P A R S O W A N K O"  )
-        self.result.data[self.result.counter]['articles'][-1]['content']=response.css('div.article-content').extract()
+        self.result.data[self.result.counter]['articles'][-1]['content']=response.css('div.article-content').extract_first().replace("\n","").replace("\t","")
 
         header=response.css('article.article').css('header')
         categ=""
@@ -183,6 +190,9 @@ class Salon24Spider(scrapy.Spider):
         self.result.data[self.result.counter]['articles'][-1]['date'] = time
         views=header.css('span::text').extract_first().replace("\n" ,"").replace("\t","")
         self.result.data[self.result.counter]['articles'][-1]['views'] = views
+        self.result.data[self.result.counter]['articles'][-1]['article_id']=""
+        self.result.data[self.result.counter]['articles'][-1]['comments']=[]
+
 
         url = "https://salon24.pl"
         return scrapy.Request(url, dont_filter=True,
@@ -227,15 +237,20 @@ blog_list=12345
 p=Result()
 p2=Result()
 p3=Result()
+p4=Result()
+p5=Result()
+p6=Result()
+p7=Result()
 start=time.time()
 
-process.crawl( Salon24Spider(),input=1, amount=1, result=p)
-#process.crawl( Salon24Spider(),input=30, result=p2)
-#process.crawl( Salon24Spider(),input=60,result=p3)
-# process.crawl( Salon24Spider(),input=90)
-# process.crawl( Salon24Spider(),input=120)
-# process.crawl( Salon24Spider(),input=150)
-# process.crawl( Salon24Spider(),input=180)
+process.crawl( Salon24Spider(),input=1, amount=5, result=p)
+process.crawl( Salon24Spider(),input=6, amount=5,result=p2)
+process.crawl( Salon24Spider(),input=11,amount=5 ,result=p3)
+process.crawl( Salon24Spider(),input=16, amount=5,result=p4)
+process.crawl( Salon24Spider(),input=21,amount=5,result=p5)
+process.crawl( Salon24Spider(),input=26,amount=5,result=p6)
+process.crawl( Salon24Spider(),input=31,amount=5,result=p7)
+
 
 
 process.start()
@@ -243,11 +258,84 @@ process.start()
 #print(p.data[2])
 # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
 # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
-for tmp in p.data:
-    print(tmp['blog_description'])
+# for tmp in p.data:
+#     print(tmp['blog_description'])
+
+
+print(len(p.data))
+print(len(p2.data))
+print(len(p3.data))
+print(len(p4.data))
+print(len(p5.data))
+print(len(p6.data))
+print(len(p7.data))
+
 
 print(time.time()-start)
 
+for blog in p.data:
+    for article in blog["articles"]:
+        alink=article["article_link"]
+        blink=blog["blog_link"]
+
+        #print(alink,blink)
+
+
+        article_id=(alink[len(blink):]).split(",", 1)[0]
+        article["article_id"]=article_id
+        json_url = urllib.request.urlopen(
+            'https://www.salon24.pl/comments-api/comments?sourceId=Post-'+article_id+'&sort=NEWEST')
+        data = json.loads(json_url.read())
+        type(data)
+
+        print(article_id)
+        for comment in data['data']["comments"]['data']:
+
+            #print(data['data']["users"][comment['userId']]["nick"] + " : ", comment['content'])
+
+            result ={
+                "author": data['data']["users"][comment['userId']]["nick"],
+                "content": comment['content'],
+                "votes": comment['votes'],
+                "likes": comment['likes'],
+                "dislikes": comment['dislikes'],
+                "date":  datetime.datetime.fromtimestamp(
+                                    int(comment['created'][:-3])
+                                    ).strftime('%Y-%m-%d %H:%M:%S'),
+                "comment_id": comment['id'],
+                "replies_amount": comment['replies'],
+                "deleted":comment['deleted'],
+                "answers": []
+
+
+            }
+            article["comments"].append(result)
+
+            if (comment['replies']):
+
+                for answer in comment["comments"]["data"]:
+                    result = {
+                        "author": data['data']["users"][answer['userId']]["nick"],
+                        "content": answer['content'],
+                        "votes": answer['votes'],
+                        "likes": answer['likes'],
+                        "dislikes": answer['dislikes'],
+                        "date": datetime.datetime.fromtimestamp(
+                            int(answer['created'][:-3])
+                        ).strftime('%Y-%m-%d %H:%M:%S'),
+                        "comment_id": answer['id'],
+                        "deleted": answer['deleted'],
+
+
+                    }
+
+
+                    #print(data['data']["users"][answer['userId']]["nick"] + " : ", answer['content'])
+
+                    article["comments"][-1]["answers"].append(result)
+
+
+print(time.time()-start)
 
 with open('data.json', 'w') as json_file:
     json.dump(p.data, json_file,ensure_ascii=False)

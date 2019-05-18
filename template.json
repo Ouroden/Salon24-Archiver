@@ -9,9 +9,36 @@
         "content": "",
         "categories": "",
         "date": "",
-        "views": ""
+        "views": "",
+        "article_id": "",
+        "comments": [
+          {
+            "author": "",
+            "content": "",
+            "votes": "",
+            "likes": "",
+            "dislikes": "",
+            "date": "",
+            "comment_id": "",
+            "replies_amount": "",
+            "deleted": "",
+            "answers": [
 
+              {
+                "author": "",
+                "content": "",
+                "votes": "",
+                "likes": "",
+                "dislikes": "",
+                "date": "",
+                "comment_id": "",
+                "deleted": ""
+              }
 
+            ]
+
+          }
+        ]
       }
 
   ],
