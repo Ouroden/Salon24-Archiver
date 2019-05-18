@@ -5,6 +5,9 @@ import json
 import urllib.request
 import datetime
 import time
+import threading
+
+
 class Result:
 
     def __init__(self):
@@ -227,30 +230,101 @@ class Salon24Spider(scrapy.Spider):
             return value[adjusted_pos_a:]
 
 
+def parseComments(data):
+    for blog in data:
+        for article in blog["articles"]:
+            alink = article["article_link"]
+            blink = blog["blog_link"]
+
+            # print(alink,blink)
+
+            article_id = (alink[len(blink):]).split(",", 1)[0]
+            article["article_id"] = article_id
+            json_url = urllib.request.urlopen(
+                'https://www.salon24.pl/comments-api/comments?sourceId=Post-' + article_id + '&sort=NEWEST&limit=100000')
+            data = json.loads(json_url.read())
+            type(data)
+
+            print(article_id)
+            for comment in data['data']["comments"]['data']:
+
+                # print(data['data']["users"][comment['userId']]["nick"] + " : ", comment['content'])
+
+                result = {
+                    "author": data['data']["users"][comment['userId']]["nick"],
+                    "content": comment['content'],
+                    "votes": comment['votes'],
+                    "likes": comment['likes'],
+                    "dislikes": comment['dislikes'],
+                    "date": datetime.datetime.fromtimestamp(
+                        int(comment['created'][:-3])
+                    ).strftime('%Y-%m-%d %H:%M:%S'),
+                    "comment_id": comment['id'],
+                    "replies_amount": comment['replies'],
+                    "deleted": comment['deleted'],
+                    "answers": []
+
+                }
+                article["comments"].append(result)
+
+                if (comment['replies']):
+
+                    for answer in comment["comments"]["data"]:
+                        result = {
+                            "author": data['data']["users"][answer['userId']]["nick"],
+                            "content": answer['content'],
+                            "votes": answer['votes'],
+                            "likes": answer['likes'],
+                            "dislikes": answer['dislikes'],
+                            "date": datetime.datetime.fromtimestamp(
+                                int(answer['created'][:-3])
+                            ).strftime('%Y-%m-%d %H:%M:%S'),
+                            "comment_id": answer['id'],
+                            "deleted": answer['deleted'],
+
+                        }
+
+                        # print(data['data']["users"][answer['userId']]["nick"] + " : ", answer['content'])
+
+                        article["comments"][-1]["answers"].append(result)
+
 
 process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
 })
 
-blog_list=12345
-
-p=Result()
-p2=Result()
-p3=Result()
-p4=Result()
-p5=Result()
-p6=Result()
-p7=Result()
+blog_list=1235
 start=time.time()
+p=[Result(),Result()]
+# p2=Result()
+# p3=Result()
+# p4=Result()
+# p5=Result()
+# p6=Result()
+# p7=Result()
 
-process.crawl( Salon24Spider(),input=1, amount=5, result=p)
-process.crawl( Salon24Spider(),input=6, amount=5,result=p2)
-process.crawl( Salon24Spider(),input=11,amount=5 ,result=p3)
-process.crawl( Salon24Spider(),input=16, amount=5,result=p4)
-process.crawl( Salon24Spider(),input=21,amount=5,result=p5)
-process.crawl( Salon24Spider(),input=26,amount=5,result=p6)
-process.crawl( Salon24Spider(),input=31,amount=5,result=p7)
+#
+process.crawl( Salon24Spider(),input=1, amount=1, result=p[0])
+process.crawl( Salon24Spider(),input=2, amount=1, result=p[1])
+# process.crawl( Salon24Spider(),input=6, amount=1,result=Result())
+# process.crawl( Salon24Spider(),input=11,amount=1 ,result=Result())
+# process.crawl( Salon24Spider(),input=16, amount=1,result=Result())
+# process.crawl( Salon24Spider(),input=21,amount=1,result=Result())
+# process.crawl( Salon24Spider(),input=26,amount=1,result=Result())
+# process.crawl( Salon24Spider(),input=31,amount=1,result=p)
+# process.crawl( Salon24Spider(),input=36, amount=1,result=p2)
+# process.crawl( Salon24Spider(),input=41,amount=1 ,result=p3)
+# process.crawl( Salon24Spider(),input=46, amount=1,result=p4)
+# process.crawl( Salon24Spider(),input=51,amount=1,result=p5)
+# process.crawl( Salon24Spider(),input=56,amount=1,result=p6)
+# process.crawl( Salon24Spider(),input=61,amount=1,result=p7)
 
+# result=[]
+# for i in range (0,95):
+#     result[i]=Result()
+#
+# for i in range (0,95):
+#     process.crawl( Salon24Spider(),input=1+(i*13), amount=13, result=result[i])
 
 
 process.start()
@@ -260,84 +334,42 @@ process.start()
 # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
 # for tmp in p.data:
 #     print(tmp['blog_description'])
-
-
-print(len(p.data))
-print(len(p2.data))
-print(len(p3.data))
-print(len(p4.data))
-print(len(p5.data))
-print(len(p6.data))
-print(len(p7.data))
-
+#
+#
+# print(len(p.data))
+# print(len(p2.data))
+# print(len(p3.data))
+# print(len(p4.data))
+# print(len(p5.data))
+# print(len(p6.data))
+# print(len(p7.data))
+print(len(p[0].data))
+print(len(p[1].data))
 
 print(time.time()-start)
 
-for blog in p.data:
-    for article in blog["articles"]:
-        alink=article["article_link"]
-        blink=blog["blog_link"]
 
-        #print(alink,blink)
+t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
+t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
+t1.start()
+t2.start()
 
-
-        article_id=(alink[len(blink):]).split(",", 1)[0]
-        article["article_id"]=article_id
-        json_url = urllib.request.urlopen(
-            'https://www.salon24.pl/comments-api/comments?sourceId=Post-'+article_id+'&sort=NEWEST')
-        data = json.loads(json_url.read())
-        type(data)
-
-        print(article_id)
-        for comment in data['data']["comments"]['data']:
-
-            #print(data['data']["users"][comment['userId']]["nick"] + " : ", comment['content'])
-
-            result ={
-                "author": data['data']["users"][comment['userId']]["nick"],
-                "content": comment['content'],
-                "votes": comment['votes'],
-                "likes": comment['likes'],
-                "dislikes": comment['dislikes'],
-                "date":  datetime.datetime.fromtimestamp(
-                                    int(comment['created'][:-3])
-                                    ).strftime('%Y-%m-%d %H:%M:%S'),
-                "comment_id": comment['id'],
-                "replies_amount": comment['replies'],
-                "deleted":comment['deleted'],
-                "answers": []
+t1.join()
+t2.join()
 
 
-            }
-            article["comments"].append(result)
+# parseComments(p[0].data)
+# parseComments(p[1].data)
 
-            if (comment['replies']):
+# for i in range (0,95):
+#     parseComments(p[i].data)
 
-                for answer in comment["comments"]["data"]:
-                    result = {
-                        "author": data['data']["users"][answer['userId']]["nick"],
-                        "content": answer['content'],
-                        "votes": answer['votes'],
-                        "likes": answer['likes'],
-                        "dislikes": answer['dislikes'],
-                        "date": datetime.datetime.fromtimestamp(
-                            int(answer['created'][:-3])
-                        ).strftime('%Y-%m-%d %H:%M:%S'),
-                        "comment_id": answer['id'],
-                        "deleted": answer['deleted'],
-
-
-                    }
-
-
-                    #print(data['data']["users"][answer['userId']]["nick"] + " : ", answer['content'])
-
-                    article["comments"][-1]["answers"].append(result)
 
 
 print(time.time()-start)
 
 with open('data.json', 'w') as json_file:
-    json.dump(p.data, json_file,ensure_ascii=False)
-
-
+    json.dump(p[0].data, json_file,ensure_ascii=False)
+    json.dump(p[1].data, json_file, ensure_ascii=False)
+    # for i in range (0,95):
+    #      json.dump(p[i].data, json_file, ensure_ascii=False)
