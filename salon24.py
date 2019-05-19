@@ -6,6 +6,8 @@ import urllib.request
 import datetime
 import time
 import threading
+from pymongo import MongoClient
+from DbManager import DbManager
 
 
 class Result:
@@ -245,7 +247,7 @@ def parseComments(data):
             data = json.loads(json_url.read())
             type(data)
 
-            print(article_id)
+            # print(article_id)
             for comment in data['data']["comments"]['data']:
 
                 # print(data['data']["users"][comment['userId']]["nick"] + " : ", comment['content'])
@@ -293,83 +295,156 @@ process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
 })
 
-blog_list=1235
-start=time.time()
-p=[Result(),Result()]
-# p2=Result()
-# p3=Result()
-# p4=Result()
-# p5=Result()
-# p6=Result()
-# p7=Result()
+
+def main():
+    print("Connecting to Database...")
+
+    client = MongoClient('localhost:27017')
+    db = client.Blogs
+    dbManager = DbManager(db)
+
+    print("Connected successfully.")
+
+    print("Downloading all blogs without comments...")
+    start = time.time()
+
+    # p = [Result(), Result()]
+    # process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
+    # process.crawl(Salon24Spider(), input=2, amount=1, result=p[1])
+    # process.start()
+
+    results = []
+    for i in range(0, 95):
+        results.append(Result())
+
+    for i in range(0, 95):
+        process.crawl(Salon24Spider(), input=1+(i*13), amount=13, result=results[i])
+
+    process.start()
+
+    print("Took: ", time.time() - start, "sec")
+
+    print("Downloading all comments...")
+    start = time.time()
+
+    # t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
+    # t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
+    # t1.start()
+    # t2.start()
+    # t1.join()
+    # t2.join()
+
+    threads = []
+    for i in range(0, 95):
+        t = threading.Thread(target=parseComments, args=(results[i].data, ))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    print("Took: ", time.time() - start, "sec")
+
+    print("Inserting to Database...")
+    start = time.time()
+
+    # for blog in p[0].data:
+    #     dbManager.insert_entry(blog)
+    # for blog in p[1].data:
+    #     dbManager.insert_entry(blog)
+
+    for result in results:
+        for blog in result.data:
+            dbManager.insert_entry(blog)
+
+    print("Took: ", time.time() - start, "sec")
+
+    # with open('data2.json', 'w') as json_file:
+    #     json.dump(p[0].data, json_file,ensure_ascii=False)
+    #     json.dump(p[1].data, json_file, ensure_ascii=False)
 
 #
-process.crawl( Salon24Spider(),input=1, amount=1, result=p[0])
-process.crawl( Salon24Spider(),input=2, amount=1, result=p[1])
-# process.crawl( Salon24Spider(),input=6, amount=1,result=Result())
-# process.crawl( Salon24Spider(),input=11,amount=1 ,result=Result())
-# process.crawl( Salon24Spider(),input=16, amount=1,result=Result())
-# process.crawl( Salon24Spider(),input=21,amount=1,result=Result())
-# process.crawl( Salon24Spider(),input=26,amount=1,result=Result())
-# process.crawl( Salon24Spider(),input=31,amount=1,result=p)
-# process.crawl( Salon24Spider(),input=36, amount=1,result=p2)
-# process.crawl( Salon24Spider(),input=41,amount=1 ,result=p3)
-# process.crawl( Salon24Spider(),input=46, amount=1,result=p4)
-# process.crawl( Salon24Spider(),input=51,amount=1,result=p5)
-# process.crawl( Salon24Spider(),input=56,amount=1,result=p6)
-# process.crawl( Salon24Spider(),input=61,amount=1,result=p7)
-
-# result=[]
-# for i in range (0,95):
-#     result[i]=Result()
+# start=time.time()
+# p=[Result(),Result()]
+# # p2=Result()
+# # p3=Result()
+# # p4=Result()
+# # p5=Result()
+# # p6=Result()
+# # p7=Result()
 #
-# for i in range (0,95):
-#     process.crawl( Salon24Spider(),input=1+(i*13), amount=13, result=result[i])
-
-
-process.start()
-
-#print(p.data[2])
-# print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
-# print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
-# for tmp in p.data:
-#     print(tmp['blog_description'])
+# #
+# process.crawl( Salon24Spider(),input=1, amount=1, result=p[0])
+# process.crawl( Salon24Spider(),input=2, amount=1, result=p[1])
+# # process.crawl( Salon24Spider(),input=6, amount=1,result=Result())
+# # process.crawl( Salon24Spider(),input=11,amount=1 ,result=Result())
+# # process.crawl( Salon24Spider(),input=16, amount=1,result=Result())
+# # process.crawl( Salon24Spider(),input=21,amount=1,result=Result())
+# # process.crawl( Salon24Spider(),input=26,amount=1,result=Result())
+# # process.crawl( Salon24Spider(),input=31,amount=1,result=p)
+# # process.crawl( Salon24Spider(),input=36, amount=1,result=p2)
+# # process.crawl( Salon24Spider(),input=41,amount=1 ,result=p3)
+# # process.crawl( Salon24Spider(),input=46, amount=1,result=p4)
+# # process.crawl( Salon24Spider(),input=51,amount=1,result=p5)
+# # process.crawl( Salon24Spider(),input=56,amount=1,result=p6)
+# # process.crawl( Salon24Spider(),input=61,amount=1,result=p7)
+#
+# # result=[]
+# # for i in range (0,95):
+# #     result[i]=Result()
+# #
+# # for i in range (0,95):
+# #     process.crawl( Salon24Spider(),input=1+(i*13), amount=13, result=result[i])
 #
 #
-# print(len(p.data))
-# print(len(p2.data))
-# print(len(p3.data))
-# print(len(p4.data))
-# print(len(p5.data))
-# print(len(p6.data))
-# print(len(p7.data))
-print(len(p[0].data))
-print(len(p[1].data))
+# process.start()
+#
+# #print(p.data[2])
+# # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
+# # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
+# # for tmp in p.data:
+# #     print(tmp['blog_description'])
+# #
+# #
+# # print(len(p.data))
+# # print(len(p2.data))
+# # print(len(p3.data))
+# # print(len(p4.data))
+# # print(len(p5.data))
+# # print(len(p6.data))
+# # print(len(p7.data))
+# print(len(p[0].data))
+# print(len(p[1].data))
+#
+# print(time.time()-start)
+#
+#
+# t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
+# t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
+# t1.start()
+# t2.start()
+#
+# t1.join()
+# t2.join()
+#
+#
+# # parseComments(p[0].data)
+# # parseComments(p[1].data)
+#
+# # for i in range (0,95):
+# #     parseComments(p[i].data)
+#
+#
+#
+# print(time.time()-start)
+#
+# # with open('data.json', 'w') as json_file:
+# #     json.dump(p[0].data, json_file,ensure_ascii=False)
+# #     json.dump(p[1].data, json_file, ensure_ascii=False)
+#     # for i in range (0,95):
+#     #      json.dump(p[i].data, json_file, ensure_ascii=False)
 
-print(time.time()-start)
 
-
-t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
-t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
-t1.start()
-t2.start()
-
-t1.join()
-t2.join()
-
-
-# parseComments(p[0].data)
-# parseComments(p[1].data)
-
-# for i in range (0,95):
-#     parseComments(p[i].data)
-
-
-
-print(time.time()-start)
-
-with open('data.json', 'w') as json_file:
-    json.dump(p[0].data, json_file,ensure_ascii=False)
-    json.dump(p[1].data, json_file, ensure_ascii=False)
-    # for i in range (0,95):
-    #      json.dump(p[i].data, json_file, ensure_ascii=False)
+if __name__ == '__main__':
+    # number of pages with blogs = 1235
+    main()
