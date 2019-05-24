@@ -182,7 +182,7 @@ class Salon24Spider(scrapy.Spider):
 
     def parseArticle(self, response):
         self.log("P A R S O W A N K O"  )
-        self.result.data[self.result.counter]['articles'][-1]['content']="dupa"#response.css('div.article-content').extract_first().replace("\n","").replace("\t","")
+        self.result.data[self.result.counter]['articles'][-1]['content']=response.css('div.article-content').extract_first().replace("\n","").replace("\t","")
 
         header=response.css('article.article').css('header')
         categ=""
