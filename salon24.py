@@ -95,11 +95,11 @@ class Salon24Spider(scrapy.Spider):
 
                 details = response.css('div.user-header__counters').extract_first()
                 if details:
-                    obserwujących = (self.between(details, "</i>", "obserwujących"))
+                    obserwujących = (self.between(details, "</i>", "obserwuj"))
                     obserwujących = self.before(obserwujących, "<span>")
                     # print(obserwujących)
 
-                    details = self.after(details, "obserwujących")
+                    details = self.after(details, "obserwuj")
                     notek = self.between(details, "</i>", "not")
                     notek = self.before(notek, "<span>")
                     # print(notek)
@@ -107,21 +107,19 @@ class Salon24Spider(scrapy.Spider):
                     details = self.after(details, "not")
                     odslon = (self.between(details, "</i>", "odsło"))
                     odslon = self.before(odslon, "<span>")
+                    if 'k' in odslon:
+                        odslon = odslon.replace("k", "000")
+
                     # print(odslon)
 
                     descritpion=response.css('div.user-about__content').css('div.too-high::text').extract_first()
                     if descritpion:
                         descritpion=descritpion.replace("\n" ,"").replace("\t","")
 
-                    details={
-                        'followers': obserwujących,
-                        'views': odslon,
-                        'articles_amount': notek,
-                        'blog_description': descritpion
-                    }
-                    self.result.data[self.result.counter]['followers']=obserwujących
-                    self.result.data[self.result.counter]['views'] = odslon
-                    self.result.data[self.result.counter]['articles_amount'] = notek
+
+                    self.result.data[self.result.counter]['followers']=int(obserwujących)
+                    self.result.data[self.result.counter]['views'] = int(odslon)
+                    self.result.data[self.result.counter]['articles_amount'] = int(notek)
                     self.result.data[self.result.counter]['blog_description'] = descritpion
 
             for article in response.css('article.posts').css('h2').extract():
@@ -184,7 +182,7 @@ class Salon24Spider(scrapy.Spider):
 
     def parseArticle(self, response):
         self.log("P A R S O W A N K O"  )
-        self.result.data[self.result.counter]['articles'][-1]['content']=response.css('div.article-content').extract_first().replace("\n","").replace("\t","")
+        self.result.data[self.result.counter]['articles'][-1]['content']="dupa"#response.css('div.article-content').extract_first().replace("\n","").replace("\t","")
 
         header=response.css('article.article').css('header')
         categ=""
@@ -194,7 +192,7 @@ class Salon24Spider(scrapy.Spider):
         time=header.css('time::text').extract_first().replace("\n" ,"").replace("\t","")
         self.result.data[self.result.counter]['articles'][-1]['date'] = time
         views=header.css('span::text').extract_first().replace("\n" ,"").replace("\t","")
-        self.result.data[self.result.counter]['articles'][-1]['views'] = views
+        self.result.data[self.result.counter]['articles'][-1]['views'] = int(views.split(" ")[0])#modyfied
         self.result.data[self.result.counter]['articles'][-1]['article_id']=""
         self.result.data[self.result.counter]['articles'][-1]['comments']=[]
 
@@ -242,10 +240,19 @@ def parseComments(data):
 
             article_id = (alink[len(blink):]).split(",", 1)[0]
             article["article_id"] = article_id
-            json_url = urllib.request.urlopen(
-                'https://www.salon24.pl/comments-api/comments?sourceId=Post-' + article_id + '&sort=NEWEST&limit=100000')
-            data = json.loads(json_url.read())
-            type(data)
+
+            for i in range(5):
+                try:
+                    json_url = urllib.request.urlopen(
+                        'https://www.salon24.pl/comments-api/comments?sourceId=Post-' + article_id + '&sort=NEWEST&limit=100000')
+                    data = json.loads(json_url.read())
+                    type(data)
+                    break
+                except ValueError:
+                    time.sleep(1)
+
+
+
 
             # print(article_id)
             for comment in data['data']["comments"]['data']:
@@ -295,7 +302,24 @@ process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
 })
 
+def tmp():
 
+    p = [Result(), Result()]
+    process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
+    process.crawl(Salon24Spider(), input=1240, amount=1, result=p[1])
+    process.start()
+
+    t1 = threading.Thread(target=parseComments, args=(p[0].data,))
+    t2 = threading.Thread(target=parseComments, args=(p[1].data,))
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    with open('data.json', 'w') as json_file:
+        json.dump(p[0].data, json_file, ensure_ascii=False)
+        json.dump(p[1].data, json_file, ensure_ascii=False)
 def main():
     print("Connecting to Database...")
 
@@ -348,10 +372,12 @@ def main():
     print("Inserting to Database...")
     start = time.time()
 
-    # for blog in p[0].data:
-    #     dbManager.insert_entry(blog)
-    # for blog in p[1].data:
-    #     dbManager.insert_entry(blog)
+
+
+    #     # for i in range (0,95):
+    #     #      json.dump(p[i].data, json_file, ensure_ascii=False)
+
+
 
     for result in results:
         for blog in result.data:
@@ -359,92 +385,9 @@ def main():
 
     print("Took: ", time.time() - start, "sec")
 
-    # with open('data2.json', 'w') as json_file:
-    #     json.dump(p[0].data, json_file,ensure_ascii=False)
-    #     json.dump(p[1].data, json_file, ensure_ascii=False)
-
-#
-# start=time.time()
-# p=[Result(),Result()]
-# # p2=Result()
-# # p3=Result()
-# # p4=Result()
-# # p5=Result()
-# # p6=Result()
-# # p7=Result()
-#
-# #
-# process.crawl( Salon24Spider(),input=1, amount=1, result=p[0])
-# process.crawl( Salon24Spider(),input=2, amount=1, result=p[1])
-# # process.crawl( Salon24Spider(),input=6, amount=1,result=Result())
-# # process.crawl( Salon24Spider(),input=11,amount=1 ,result=Result())
-# # process.crawl( Salon24Spider(),input=16, amount=1,result=Result())
-# # process.crawl( Salon24Spider(),input=21,amount=1,result=Result())
-# # process.crawl( Salon24Spider(),input=26,amount=1,result=Result())
-# # process.crawl( Salon24Spider(),input=31,amount=1,result=p)
-# # process.crawl( Salon24Spider(),input=36, amount=1,result=p2)
-# # process.crawl( Salon24Spider(),input=41,amount=1 ,result=p3)
-# # process.crawl( Salon24Spider(),input=46, amount=1,result=p4)
-# # process.crawl( Salon24Spider(),input=51,amount=1,result=p5)
-# # process.crawl( Salon24Spider(),input=56,amount=1,result=p6)
-# # process.crawl( Salon24Spider(),input=61,amount=1,result=p7)
-#
-# # result=[]
-# # for i in range (0,95):
-# #     result[i]=Result()
-# #
-# # for i in range (0,95):
-# #     process.crawl( Salon24Spider(),input=1+(i*13), amount=13, result=result[i])
-#
-#
-# process.start()
-#
-# #print(p.data[2])
-# # print(p2.data[0]["articles"],p2.data[1]["articles"],p2.data[2]["articles"])
-# # print(p3.data[0]["articles"],p2.data[1]["articles"],p3.data[2]["articles"])
-# # for tmp in p.data:
-# #     print(tmp['blog_description'])
-# #
-# #
-# # print(len(p.data))
-# # print(len(p2.data))
-# # print(len(p3.data))
-# # print(len(p4.data))
-# # print(len(p5.data))
-# # print(len(p6.data))
-# # print(len(p7.data))
-# print(len(p[0].data))
-# print(len(p[1].data))
-#
-# print(time.time()-start)
-#
-#
-# t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
-# t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
-# t1.start()
-# t2.start()
-#
-# t1.join()
-# t2.join()
-#
-#
-# # parseComments(p[0].data)
-# # parseComments(p[1].data)
-#
-# # for i in range (0,95):
-# #     parseComments(p[i].data)
-#
-#
-#
-# print(time.time()-start)
-#
-# # with open('data.json', 'w') as json_file:
-# #     json.dump(p[0].data, json_file,ensure_ascii=False)
-# #     json.dump(p[1].data, json_file, ensure_ascii=False)
-#     # for i in range (0,95):
-#     #      json.dump(p[i].data, json_file, ensure_ascii=False)
 
 
 if __name__ == '__main__':
     # number of pages with blogs = 1235
-    main()
+    #main()
+    tmp()
