@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/python
 
 from pymongo import MongoClient
 from pprint import pprint
@@ -11,7 +11,7 @@ def main(blogs):
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
-    db = client.Blogs
+    db = client.BlogsExample
     blogs = db["Blogs"]
 
     try:
