@@ -302,8 +302,8 @@ process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
 })
 
-def tmp():
 
+def tmp():
     p = [Result(), Result()]
     process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
     process.crawl(Salon24Spider(), input=1240, amount=1, result=p[1])
@@ -320,11 +320,13 @@ def tmp():
     with open('data.json', 'w') as json_file:
         json.dump(p[0].data, json_file, ensure_ascii=False)
         json.dump(p[1].data, json_file, ensure_ascii=False)
+
+
 def main():
     print("Connecting to Database...")
 
     client = MongoClient('localhost:27017')
-    db = client.Blogs
+    db = client.BlogsExample
     dbManager = DbManager(db)
 
     print("Connected successfully.")
@@ -332,56 +334,61 @@ def main():
     print("Downloading all blogs without comments...")
     start = time.time()
 
-    # p = [Result(), Result()]
-    # process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
-    # process.crawl(Salon24Spider(), input=2, amount=1, result=p[1])
-    # process.start()
-
-    results = []
-    for i in range(0, 95):
-        results.append(Result())
-
-    for i in range(0, 95):
-        process.crawl(Salon24Spider(), input=1+(i*13), amount=13, result=results[i])
-
+    p = [Result(), Result()]
+    process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
+    process.crawl(Salon24Spider(), input=2, amount=1, result=p[1])
     process.start()
+
+    # results = []
+    # for i in range(0, 95):
+    #     results.append(Result())
+    #
+    # for i in range(0, 95):
+    #     process.crawl(Salon24Spider(), input=1+(i*13), amount=13, result=results[i])
+    #
+    # process.start()
 
     print("Took: ", time.time() - start, "sec")
 
     print("Downloading all comments...")
     start = time.time()
 
-    # t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
-    # t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
-    # t1.start()
-    # t2.start()
-    # t1.join()
-    # t2.join()
+    t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
+    t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
 
-    threads = []
-    for i in range(0, 95):
-        t = threading.Thread(target=parseComments, args=(results[i].data, ))
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
+    # threads = []
+    # for i in range(0, 95):
+    #     t = threading.Thread(target=parseComments, args=(results[i].data, ))
+    #     threads.append(t)
+    #     t.start()
+    #
+    # for t in threads:
+    #     t.join()
 
     print("Took: ", time.time() - start, "sec")
 
     print("Inserting to Database...")
     start = time.time()
 
+    for blog in p[0].data:
+        dbManager.insert_entry(blog)
+
+    for blog in p[1].data:
+        dbManager.insert_entry(blog)
 
 
-    #     # for i in range (0,95):
-    #     #      json.dump(p[i].data, json_file, ensure_ascii=False)
 
 
+    # for result in results:
+    #     for blog in result.data:
+    #         dbManager.insert_entry(blog)
 
-    for result in results:
-        for blog in result.data:
-            dbManager.insert_entry(blog)
+    # for i in range (0,95):
+    #      json.dump(p[i].data, json_file, ensure_ascii=False)
 
     print("Took: ", time.time() - start, "sec")
 
@@ -389,5 +396,5 @@ def main():
 
 if __name__ == '__main__':
     # number of pages with blogs = 1235
-    #main()
-    tmp()
+    main()
+    # tmp()
