@@ -48,4 +48,25 @@ function totalNumberOfFollowers() {
     ]);
 }
 
+function statistics() {
+    return db.Blogs.aggregate([
+        { $group: {
+            _id: null,
+            followers: {$sum: "$followers"},
+            views: {$sum: "$views"},
+            articles_amount: {$sum: "$articles_amount"}
+        }}
+    ]);
+}
+
+function categoryStatistics()
+{
+    return db.Blogs.aggregate([
+        {$unwind: "$articles"},
+        {$group: {
+            _id: '$articles.categories',
+            total: {$sum: 1}
+        }}
+    ]);
+}
 
