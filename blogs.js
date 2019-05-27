@@ -70,3 +70,25 @@ function categoryStatistics()
     ]);
 }
 
+function articlesPerBlog()
+{
+    return db.Blogs.aggregate([
+        {$group: {
+            _id: '$blog_name',
+            total: {$sum: "$articles_amount"}
+        }},
+        {$sort: {total: -1}}
+    ]);
+}
+
+function commentsPerBlog()
+{
+    return db.Blogs.aggregate([
+        {$project: {
+            _id: '$blog_name',
+            count: {$size: "$articles.comments"},
+        }},
+        {$sort: {count: -1}}
+    ]);
+}
+
