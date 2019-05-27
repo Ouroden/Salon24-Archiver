@@ -9,6 +9,7 @@
         "content": "",
         "categories": "",
         "date": "",
+        "raw_date": "",
         "views": "",
         "article_id": "",
         "comments": [
@@ -19,6 +20,7 @@
             "likes": "",
             "dislikes": "",
             "date": "",
+            "raw_date": "",
             "comment_id": "",
             "replies_amount": "",
             "deleted": "",
@@ -31,6 +33,7 @@
                 "likes": "",
                 "dislikes": "",
                 "date": "",
+                "raw_date": "",
                 "comment_id": "",
                 "deleted": ""
               }
