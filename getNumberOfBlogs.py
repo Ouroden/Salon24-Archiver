@@ -11,7 +11,7 @@ def main(blogs):
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
-    db = client.BlogsExample
+    db = client.Wazne
     blogs = db["Blogs"]
 
     try:

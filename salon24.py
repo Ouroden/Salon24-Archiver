@@ -33,6 +33,13 @@ class Salon24Spider(scrapy.Spider):
 
         self.log(self.amount)
         url = "https://www.salon24.pl/katalog-blogow/,alfabetycznie," + str(self.input)
+        """      
+        self.log('I just visited: ' + url)# +str(self.input))
+        a={"ulr" : url
+           }
+        with open('data.json', 'a') as json_file:
+            json.dump(a, json_file, ensure_ascii=False)
+        """
         return scrapy.Request(url,
                               callback=self.parseBlogs)
 
@@ -136,7 +143,8 @@ class Salon24Spider(scrapy.Spider):
                 next_exist=next.find("Następna strona")
                 if(next_exist>0):
                     url= "https://"+self.between(next,"//","\" alt")
-                    return scrapy.Request(url, dont_filter=True,
+                    if not "10,wszystkie" in url: #edited
+                        return scrapy.Request(url, dont_filter=True,
                                           callback=self.parseSingleBlog)
 
             self.result.counter += 1
@@ -191,7 +199,9 @@ class Salon24Spider(scrapy.Spider):
             categ+=self.between(cat,"\">","</a>") + " " # maybe should be table?
         self.result.data[self.result.counter]['articles'][-1]['categories'] = categ
         time=header.css('time::text').extract_first().replace("\n" ,"").replace("\t","")
+        raw_date=self.toRawDate(time)
         self.result.data[self.result.counter]['articles'][-1]['date'] = time
+        self.result.data[self.result.counter]['articles'][-1]['raw_date'] = raw_date
         views=header.css('span::text').extract_first().replace("\n" ,"").replace("\t","")
         self.result.data[self.result.counter]['articles'][-1]['views'] = int(views.split(" ")[0])#modyfied
         self.result.data[self.result.counter]['articles'][-1]['article_id']=""
@@ -201,6 +211,49 @@ class Salon24Spider(scrapy.Spider):
         url = "https://salon24.pl"
         return scrapy.Request(url, dont_filter=True,
                               callback=self.findArticle)
+
+    def toRawDate(self, time):
+        def monthToInt(month):
+            if month.startswith('sty'):
+                return (1)
+            elif month.startswith('lut'):
+                return (2)
+            elif month.startswith('marz'):
+                return (3)
+            elif month.startswith('kwie'):
+                return (4)
+            elif month.startswith('maj'):
+                return (5)
+            elif month.startswith('czerw'):
+                return (6)
+            elif month.startswith('lip'):
+                return (7)
+            elif month.startswith('sier'):
+                return (8)
+            elif month.startswith('wrze'):
+                return (9)
+            elif month.startswith('paź'):
+                return (10)
+            elif month.startswith('lis'):
+                return (11)
+            elif month.startswith('gru'):
+                return (12)
+            else:
+                return 1
+
+
+        split = time.split(" ")
+        day = int(split[0])
+        month = int(monthToInt(split[1]))
+        year = int(split[2][:-1])
+        clock = split[3].split(":")
+        hour = int(clock[0])
+        minute = int(clock[1])
+
+        date = datetime.datetime(year, month, day, hour, minute)
+
+        raw_date = int(date.timestamp())
+        return(raw_date)
 
 
     def between(self, value, a, b,hack=0):
@@ -269,6 +322,7 @@ def parseComments(data):
                     "date": datetime.datetime.fromtimestamp(
                         int(comment['created'][:-3])
                     ).strftime('%Y-%m-%d %H:%M:%S'),
+                    "raw_date":int(comment['created'][:-3]),
                     "comment_id": comment['id'],
                     "replies_amount": comment['replies'],
                     "deleted": comment['deleted'],
@@ -289,6 +343,7 @@ def parseComments(data):
                             "date": datetime.datetime.fromtimestamp(
                                 int(answer['created'][:-3])
                             ).strftime('%Y-%m-%d %H:%M:%S'),
+                            "raw_date":int(answer['created'][:-3]),
                             "comment_id": answer['id'],
                             "deleted": answer['deleted'],
 
@@ -307,7 +362,7 @@ process = CrawlerProcess({
 def tmp():
     p = [Result(), Result()]
     process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
-    process.crawl(Salon24Spider(), input=1240, amount=1, result=p[1])
+    process.crawl(Salon24Spider(), input=2, amount=1, result=p[1])
     process.start()
 
     t1 = threading.Thread(target=parseComments, args=(p[0].data,))
@@ -324,69 +379,69 @@ def tmp():
 
 
 def main():
-    print("Connecting to Database...")
 
-    client = MongoClient('localhost:27017')
-    db = client.BlogsExample
-    dbManager = DbManager(db)
-
-    print("Connected successfully.")
 
     print("Downloading all blogs without comments...")
     start = time.time()
 
-    p = [Result(), Result()]
-    process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
-    process.crawl(Salon24Spider(), input=2, amount=1, result=p[1])
-    process.start()
-
-    # results = []
-    # for i in range(0, 95):
-    #     results.append(Result())
-    #
-    # for i in range(0, 95):
-    #     process.crawl(Salon24Spider(), input=1+(i*13), amount=13, result=results[i])
-    #
+    # p = [Result(), Result()]
+    # process.crawl(Salon24Spider(), input=1, amount=1, result=p[0])
+    # process.crawl(Salon24Spider(), input=2, amount=1, result=p[1])
     # process.start()
+
+    results = []
+    for i in range(0, 95):
+        results.append(Result())
+
+    for i in range(0, 95):
+        process.crawl(Salon24Spider(), input=1+(i), amount=1, result=results[i]) #edited
+
+    process.start()
 
     print("Took: ", time.time() - start, "sec")
 
     print("Downloading all comments...")
     start = time.time()
 
-    t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
-    t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
-    t1.start()
-    t2.start()
-    t1.join()
-    t2.join()
+    # t1 = threading.Thread(target=parseComments, args=(p[0].data, ))
+    # t2 = threading.Thread(target=parseComments, args=(p[1].data, ))
+    # t1.start()
+    # t2.start()
+    # t1.join()
+    # t2.join()
 
-    # threads = []
-    # for i in range(0, 95):
-    #     t = threading.Thread(target=parseComments, args=(results[i].data, ))
-    #     threads.append(t)
-    #     t.start()
-    #
-    # for t in threads:
-    #     t.join()
+    threads = []
+    for i in range(0, 95):
+        t = threading.Thread(target=parseComments, args=(results[i].data, ))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
 
     print("Took: ", time.time() - start, "sec")
 
     print("Inserting to Database...")
     start = time.time()
 
-    for blog in p[0].data:
-        dbManager.insert_entry(blog)
+    # for blog in p[0].data:
+    #     dbManager.insert_entry(blog)
+    #
+    # for blog in p[1].data:
+    #     dbManager.insert_entry(blog)
 
-    for blog in p[1].data:
-        dbManager.insert_entry(blog)
+    print("Connecting to Database...")
+
+    client = MongoClient('localhost:27017')
+    db = client.Wazne
+    dbManager = DbManager(db)
+
+    print("Connected successfully.")
 
 
-
-
-    # for result in results:
-    #     for blog in result.data:
-    #         dbManager.insert_entry(blog)
+    for result in results:
+        for blog in result.data:
+            dbManager.insert_entry(blog)
 
     # for i in range (0,95):
     #      json.dump(p[i].data, json_file, ensure_ascii=False)
@@ -398,4 +453,4 @@ def main():
 if __name__ == '__main__':
     # number of pages with blogs = 1235
     main()
-    # tmp()
+    #tmp()
