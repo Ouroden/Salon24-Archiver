@@ -302,8 +302,8 @@ def parseComments(data):
                     data = json.loads(json_url.read())
                     type(data)
                     break
-                except ValueError:
-                    time.sleep(1)
+                except:
+                    time.sleep(0.2)
 
 
 
@@ -329,7 +329,8 @@ def parseComments(data):
                     "answers": []
 
                 }
-                article["comments"].append(result)
+                if article["comments"]:
+                    article["comments"].append(result)
 
                 if (comment['replies']):
 
@@ -350,8 +351,8 @@ def parseComments(data):
                         }
 
                         # print(data['data']["users"][answer['userId']]["nick"] + " : ", answer['content'])
-
-                        article["comments"][-1]["answers"].append(result)
+                        if article["comments"][-1]["answers"]:
+                            article["comments"][-1]["answers"].append(result)
 
 
 process = CrawlerProcess({
