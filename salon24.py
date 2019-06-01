@@ -397,10 +397,10 @@ def main():
 
     for i in range(0, 100):
         results.append(Result())
-
-    for i in range(100, 200):
-        process.crawl(Salon24Spider(), input=1+(i), amount=1, result=results[i-100]) #edited
-
+    j=0
+    for i in range(200, 500,3):
+        process.crawl(Salon24Spider(), input=1+(i), amount=3, result=results[j]) #edited
+        j+=1
     process.start()
 
     print("Took: ", time.time() - start, "sec")
@@ -446,7 +446,7 @@ def main():
     print("Connecting to Database...")
 
     client = MongoClient('localhost:27017')
-    db = client.Salon
+    db = client.Salon200to500
     dbManager = DbManager(db)
 
     print("Connected successfully.")
