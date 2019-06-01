@@ -143,8 +143,8 @@ class Salon24Spider(scrapy.Spider):
                 next_exist=next.find("Następna strona")
                 if(next_exist>0):
                     url= "https://"+self.between(next,"//","\" alt")
-                    if not "10,wszystkie" in url: #edited
-                        return scrapy.Request(url, dont_filter=True,
+                    #if not "10,wszystkie" in url: #edited
+                    return scrapy.Request(url, dont_filter=True,
                                           callback=self.parseSingleBlog)
 
             self.result.counter += 1
@@ -304,6 +304,7 @@ def parseComments(data):
                     break
                 except:
                     time.sleep(0.2)
+                    print(i, "times try to open url")
 
 
 
@@ -329,9 +330,10 @@ def parseComments(data):
                     "answers": []
 
                 }
-                if article["comments"]:
+                try:
                     article["comments"].append(result)
-
+                except:
+                    print("error while adding comment")
                 if (comment['replies']):
 
                     for answer in comment["comments"]["data"]:
@@ -351,9 +353,10 @@ def parseComments(data):
                         }
 
                         # print(data['data']["users"][answer['userId']]["nick"] + " : ", answer['content'])
-                        if article["comments"][-1]["answers"]:
+                        try:
                             article["comments"][-1]["answers"].append(result)
-
+                        except:
+                            print("error while adding answer")
 
 process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
@@ -391,11 +394,12 @@ def main():
     # process.start()
 
     results = []
-    for i in range(0, 95):
+
+    for i in range(0, 100):
         results.append(Result())
 
-    for i in range(0, 95):
-        process.crawl(Salon24Spider(), input=1+(i), amount=1, result=results[i]) #edited
+    for i in range(100, 200):
+        process.crawl(Salon24Spider(), input=1+(i), amount=1, result=results[i-100]) #edited
 
     process.start()
 
@@ -411,9 +415,17 @@ def main():
     # t1.join()
     # t2.join()
 
+    data=[[],[],[],[],[]];
+    for i in range (0,100,5):
+        data[0].extend(results[i].data)
+        data[1].extend(results[i+1].data)
+        data[2].extend(results[i+2].data)
+        data[3].extend(results[i+3].data)
+        data[4].extend(results[i+4].data)
+
     threads = []
-    for i in range(0, 95):
-        t = threading.Thread(target=parseComments, args=(results[i].data, ))
+    for i in range(0, 5):
+        t = threading.Thread(target=parseComments, args=(data[i], ))
         threads.append(t)
         t.start()
 
@@ -434,20 +446,32 @@ def main():
     print("Connecting to Database...")
 
     client = MongoClient('localhost:27017')
-    db = client.Wazne
+    db = client.Salon
     dbManager = DbManager(db)
 
     print("Connected successfully.")
 
-
-    for result in results:
-        for blog in result.data:
+    for result in data:
+        for blog in result:
             dbManager.insert_entry(blog)
+
+    #
+    # for result in results:
+    #     for blog in result.data:
+    #         dbManager.insert_entry(blog)
 
     # for i in range (0,95):
     #      json.dump(p[i].data, json_file, ensure_ascii=False)
 
     print("Took: ", time.time() - start, "sec")
+    #
+    # with open('dupa.json', 'w') as json_file:
+    #     json.dump(data[0], json_file, ensure_ascii=False)
+    #     json.dump(data[1], json_file, ensure_ascii=False)
+    #     json.dump(data[2], json_file, ensure_ascii=False)
+    #     json.dump(data[3], json_file, ensure_ascii=False)
+    #     json.dump(data[4], json_file, ensure_ascii=False)
+
 
 
 
