@@ -1,9 +1,8 @@
 {
-  "nick":"",
-  "blog_name": "",
-  "blog_link": "",
-  "articles": [
-      {
+    "nick":"",
+    "blog_name": "",
+    "blog_link": "",
+    "articles": [{
         "title": "",
         "article_link": "",
         "content": "",
@@ -12,8 +11,7 @@
         "raw_date": "",
         "views": "",
         "article_id": "",
-        "comments": [
-          {
+        "comments": [{
             "author": "",
             "content": "",
             "votes": "",
@@ -24,9 +22,7 @@
             "comment_id": "",
             "replies_amount": "",
             "deleted": "",
-            "answers": [
-
-              {
+            "answers": [{
                 "author": "",
                 "content": "",
                 "votes": "",
@@ -36,17 +32,11 @@
                 "raw_date": "",
                 "comment_id": "",
                 "deleted": ""
-              }
-
-            ]
-
-          }
-        ]
-      }
-
-  ],
-  "followers": "",
-  "views": "",
-  "articles_amount":"",
-  "blog_description": ""
+            }]
+        }]
+    }],
+    "followers": "",
+    "views": "",
+    "articles_amount":"",
+    "blog_description": ""
 }
