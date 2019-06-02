@@ -19,7 +19,7 @@ def main(blogs):
 
     result = list(cursor)
 
-    pprint(result)
+    pprint(result[:10])
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
