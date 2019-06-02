@@ -44,7 +44,7 @@ def main(blogs):
         print(y, ": ", len(resultTmp))
         result.append(len(resultTmp))
 
-    print(result)
+    return(result)
 
 
 if __name__ == '__main__':
@@ -52,8 +52,32 @@ if __name__ == '__main__':
     db = client.Salon
     blogs = db["Blogs"]
 
+
+
     try:
-        main(blogs)
+        results=main(blogs)
+        print(results)
+
+        import matplotlib.pyplot as plt;
+
+        plt.rcdefaults()
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        objects = ('2006', '2007', '2008', '2009','2010', '2011', '2012', '2013','2014', '2015', '2016', '2017','2018', '2019')
+        y_pos = np.arange(len(objects))
+        performance = results
+
+        plt.bar(y_pos, performance, align='center', alpha=0.5)
+        plt.xticks(y_pos, objects)
+        plt.ylabel('articels')
+        plt.xlabel('years')
+        plt.title('Amount of articles')
+
+        plt.show()
+
+
+
     except Exception as e:
         print(str(e))
 

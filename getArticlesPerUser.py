@@ -19,7 +19,7 @@ def main(blogs):
 
     result = list(cursor)
 
-    pprint(result)
+    return (result)
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
@@ -27,7 +27,24 @@ if __name__ == '__main__':
     blogs = db["Blogs"]
 
     try:
-        main(blogs)
+        results=main(blogs)
+        pprint(results)
+        tab=[]
+        tab2=[]
+        i=0
+        for r in results:
+            pass
+            tab.append(i + 1)
+            i += 1
+            tab2.append(r['total'])
+
+        print(tab, tab2)
+        import matplotlib.pyplot as plt
+
+        plt.xlabel('sorted users')
+        plt.ylabel('articles amount')
+        plt.plot(tab, tab2, label='line 1', linewidth=1)
+        plt.show()
     except Exception as e:
         print(str(e))
 
