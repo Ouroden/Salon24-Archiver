@@ -23,7 +23,7 @@ def main(blogs):
     tab[2019] = 1546297200
     tab[2020] = 9999999999
     result = []
-    for y in range(2007, 2020):
+    for y in range(2007, 2021):
 
         pipeline = [
             {"$unwind": "$articles"},
