@@ -38,7 +38,7 @@ def main(blogs):
             {"$sort": {"total": -1}}
         ]
 
-        cursor = blogs.aggregate(pipeline)
+        cursor = blogs.aggregate(pipeline,allowDiskUse=True)
         resultTmp = list(cursor)
 
         print(y, ": ", len(resultTmp))
@@ -49,7 +49,7 @@ def main(blogs):
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
-    db = client.Salon
+    db = client.Salon24
     blogs = db["Blogs"]
 
 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         y_pos = np.arange(len(objects))
         performance = results
 
-        plt.bar(y_pos, performance, align='center', alpha=0.5)
+        plt.bar(y_pos, performance, align='center', alpha=0.5, color="blue")
         plt.xticks(y_pos, objects)
         plt.ylabel('articels')
         plt.xlabel('years')

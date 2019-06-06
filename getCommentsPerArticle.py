@@ -11,9 +11,9 @@ def main(blogs):
     pipeline = [
         {"$project": {
             "_id": "$blog_name",
-            "comments_without_answers": {"$size": "$articles.comments"},
+            "comments": {"$size": "$articles.comments"},
         }},
-        {"$sort": {"comments_without_answers": -1}}
+        {"$sort": {"comments": -1}}
     ]
 
     cursor = blogs.aggregate(pipeline)
@@ -24,13 +24,16 @@ def main(blogs):
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
-    db = client.Salon
+    db = client.Salon24
     blogs = db["Blogs"]
 
     try:
         results=(main(blogs))
-        pprint(results)
-        #pomnoz *1.3 przed uzyciem
+        liczba=0
+        for r in results:
+            r["comments"]=int(r["comments"]*1.3)
+            liczba+=r["comments"]
+        print(liczba)
     except Exception as e:
         print(str(e))
 

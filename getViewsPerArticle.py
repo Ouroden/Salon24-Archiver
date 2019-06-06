@@ -15,7 +15,7 @@ def main(blogs):
         {"$sort": {"_id.views": -1}}
     ]
 
-    cursor = blogs.aggregate(pipeline)
+    cursor = blogs.aggregate(pipeline,allowDiskUse=True)
 
     result = list(cursor)
 
@@ -23,7 +23,7 @@ def main(blogs):
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
-    db = client.Salon
+    db = client.Salon24
     blogs = db["Blogs"]
 
     try:
