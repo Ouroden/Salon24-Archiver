@@ -4,9 +4,6 @@ from pymongo import MongoClient
 from pprint import pprint
 
 def main(blogs):
-    #number_of_blogs = blogs.count_documents({})
-    #number_of_blogs = blogs.estimated_document_count()
-
 
     pipeline = [
         {"$project": {
@@ -29,11 +26,12 @@ if __name__ == '__main__':
 
     try:
         results=(main(blogs))
-        liczba=0
+        number=0
         for r in results:
             r["comments"]=int(r["comments"]*1.3)
-            liczba+=r["comments"]
-        print(liczba)
+            number+=r["comments"]
+        print(number)
+
     except Exception as e:
         print(str(e))
 

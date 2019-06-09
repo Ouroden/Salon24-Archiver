@@ -24,8 +24,7 @@ class Result:
         self.counter=0
 
 
-
-def tmp():
+def smallDataSizeTest():
     p = [Result(), Result()]
     process.crawl(Parser.Salon24Spider(), input=1, amount=1, result=p[0])
     process.crawl(Parser.Salon24Spider(), input=2, amount=1, result=p[1])
@@ -46,10 +45,8 @@ def tmp():
 
 def main():
 
-
     print("Downloading all blogs without comments...")
     start = time.time()
-
 
     results = []
 
@@ -65,7 +62,6 @@ def main():
 
     print("Downloading all comments...")
     start = time.time()
-
 
 
     data=[[],[],[],[],[]];
@@ -107,9 +103,7 @@ def main():
     print("Took: ", time.time() - start, "sec")
 
 
-
-
 if __name__ == '__main__':
     # number of pages with blogs = 1235
     main()
-    #tmp()
+    #smallDataSizeTest()

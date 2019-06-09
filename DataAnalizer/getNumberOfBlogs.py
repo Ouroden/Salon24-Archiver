@@ -7,19 +7,7 @@ def main(blogs):
     number_of_blogs = blogs.count_documents({})
     #number_of_blogs = blogs.estimated_document_count()
 
-    pipeline = [
-        {"$unwind": "$articles"},
-        {"$group": {
-            "_id": {"title": "$articles.title", "views": "$articles.views"},
-        }},
-        {"$sort": {"_id.views": -1}}
-    ]
-
-    cursor = blogs.aggregate(pipeline,allowDiskUse=True)
-
-    result = list(cursor)
-
-    pprint(result[:10])
+    pprint(number_of_blogs)
 
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
@@ -28,6 +16,7 @@ if __name__ == '__main__':
 
     try:
         main(blogs)
+        
     except Exception as e:
         print(str(e))
 

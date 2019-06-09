@@ -4,8 +4,6 @@ from pymongo import MongoClient
 from pprint import pprint
 
 def main(blogs):
-    number_of_blogs = blogs.count_documents({})
-    #number_of_blogs = blogs.estimated_document_count()
 
     pipeline = [
         {"$unwind": "$articles"},

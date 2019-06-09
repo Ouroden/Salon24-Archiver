@@ -4,8 +4,6 @@ from pymongo import MongoClient
 from pprint import pprint
 
 def main(blogs):
-    #number_of_blogs = blogs.count_documents({})
-    #number_of_blogs = blogs.estimated_document_count()
 
     pipeline = [
         {"$group": {
@@ -21,6 +19,7 @@ def main(blogs):
 
     return (result)
 
+
 if __name__ == '__main__':
     client = MongoClient('localhost:27017')
     db = client.Salon24
@@ -30,13 +29,10 @@ if __name__ == '__main__':
         results=main(blogs)
         pprint(results)
 
-
-
-
-
         tab=[]
         tab2=[]
         i=0
+
         for r in results:
             pass
             tab.append(i + 1)
@@ -68,6 +64,7 @@ if __name__ == '__main__':
         plt.ylabel('articles amount')
         plt.plot(tab, tab2, label='line 1', linewidth=1)
         plt.show()
+        
     except Exception as e:
         print(str(e))
 

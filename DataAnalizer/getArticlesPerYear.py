@@ -23,6 +23,7 @@ def main(blogs):
     tab[2019] = 1546297200
     tab[2020] = 9999999999
     result = []
+
     for y in range(2007, 2021):
 
         pipeline = [
@@ -52,8 +53,6 @@ if __name__ == '__main__':
     db = client.Salon24
     blogs = db["Blogs"]
 
-
-
     try:
         results=main(blogs)
         print(results)
@@ -73,10 +72,7 @@ if __name__ == '__main__':
         plt.ylabel('articels')
         plt.xlabel('years')
         plt.title('Amount of articles')
-
         plt.show()
-
-
 
     except Exception as e:
         print(str(e))
