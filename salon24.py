@@ -91,7 +91,7 @@ def main():
     print("Connecting to Database...")
 
     client = MongoClient('localhost:27017')
-    db = client.SalonBaza
+    db = client.Salon24
     dbManager = DbManager(db)
 
     print("Connected successfully.")
